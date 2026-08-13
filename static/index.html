@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Market API Console</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --border: #e3e6ea;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 220px;
+      background: #111827;
+      color: #e5e7eb;
+      padding: 24px 12px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .sidebar .brand {
+      font-size: 18px;
+      font-weight: 700;
+      padding: 0 12px 20px;
+      letter-spacing: 0.2px;
+    }
+
+    .sidebar .brand span {
+      color: #60a5fa;
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      border: none;
+      background: transparent;
+      color: #d1d5db;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      text-align: left;
+      width: 100%;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-btn:hover {
+      background: #1f2937;
+      color: #fff;
+    }
+
+    .nav-btn.active {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .nav-btn .icon {
+      width: 20px;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    .main {
+      flex: 1;
+      padding: 28px 36px;
+      max-width: 1000px;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      font-size: 15px;
+      margin-bottom: 14px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-row.single {
+      grid-template-columns: 1fr;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+      transition: border-color 0.15s;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    button.primary:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button.secondary:hover {
+      background: #f3f4f6;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .status-pill.online {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-pill.offline {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .auth-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .auth-status.logged-in {
+      background: #dcfce7;
+      border-color: #86efac;
+    }
+
+    .token-box {
+      font-family: Consolas, monospace;
+      font-size: 11px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      word-break: break-all;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .product-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .product-card .title {
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .product-card .price {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 17px;
+    }
+
+    .product-card .meta {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .product-card .desc {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .badge.on-sale {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge.sold {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: #f9fafb;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f1f2f4;
+    }
+
+    .table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 30px 0;
+      font-size: 13px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #111827;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      z-index: 100;
+      display: none;
+      animation: slideUp 0.2s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 10px 12px;
+      }
+      .sidebar .brand {
+        padding: 4px 8px;
+        white-space: nowrap;
+        font-size: 15px;
+      }
+      .nav-btn {
+        white-space: nowrap;
+        width: auto;
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+      .main {
+        padding: 18px 14px;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">Campus <span>Market</span></div>
+    <button class="nav-btn active" data-page="products">商品</button>
+    <button class="nav-btn" data-page="orders">订单</button>
+    <button class="nav-btn" data-page="messages">消息</button>
+    <button class="nav-btn" data-page="account">账号</button>
+  </aside>
+
+  <main class="main">
+    <!-- Products page -->
+    <section class="page active" id="page-products">
+      <h1>商品</h1>
+      <p class="subtitle">浏览商品列表，或发布新的二手商品</p>
+
+      <div class="auth-status" id="product-auth-status">
+        <span>尚未登录，仅可浏览商品</span>
+      </div>
+
+      <div class="card">
+        <h2>发布商品</h2>
+        <div class="form-row">
+          <div>
+            <label>标题</label>
+            <input type="text" id="product-title" placeholder="例如：九成新高等数学教材">
+          </div>
+          <div>
+            <label>价格（元）</label>
+            <input type="number" id="product-price" placeholder="25.5" min="0.01" step="0.01">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>分类</label>
+            <select id="product-category">
+              <option value="1">教材书籍</option>
+              <option value="2">数码产品</option>
+              <option value="3">生活用品</option>
+              <option value="4">其他</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row single">
+          <div>
+            <label>描述</label>
+            <textarea id="product-description" placeholder="商品成色、使用情况等"></textarea>
+          </div>
+        </div>
+        <button class="primary" id="btn-create-product">发布商品</button>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <h2 style="margin:0;">商品列表</h2>
+          <button class="secondary" id="btn-refresh-products">刷新</button>
+        </div>
+        <div class="product-grid" id="product-list">
+          <div class="empty-state">加载中...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Orders page -->
+    <section class="page" id="page-orders">
+      <h1>订单</h1>
+      <p class="subtitle">查看我买入和卖出的订单</p>
+      <div class="auth-status" id="order-auth-status">
+        <span>登录后查看订单</span>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <button class="secondary" id="btn-buyer-orders" style="background:var(--accent);color:#fff;border-color:var(--accent);">我买入的</button>
+          <button class="secondary" id="btn-seller-orders">我卖出的</button>
+        </div>
+        <table class="table" id="orders-table">
+          <thead>
+            <tr><th>订单ID</th><th>商品ID</th><th>金额</th><th>状态</th><th>创建时间</th></tr>
+          </thead>
+          <tbody id="orders-body">
+            <tr><td colspan="5" class="empty-state">暂无订单</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Messages page -->
+    <section class="page" id="page-messages">
+      <h1>消息</h1>
+      <p class="subtitle">查看收到的站内消息</p>
+      <div class="auth-status" id="message-auth-status">
+        <span>登录后查看消息</span>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <h2 style="margin:0;">收件箱</h2>
+          <button class="secondary" id="btn-refresh-messages">刷新</button>
+        </div>
+        <table class="table" id="messages-table">
+          <thead>
+            <tr><th>ID</th><th>发送者</th><th>内容</th><th>状态</th><th>时间</th></tr>
+          </thead>
+          <tbody id="messages-body">
+            <tr><td colspan="5" class="empty-state">暂无消息</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Account page -->
+    <section class="page" id="page-account">
+      <h1>账号</h1>
+      <p class="subtitle">注册或登录以使用完整功能</p>
+
+      <div class="card">
+        <h2>当前状态</h2>
+        <div class="auth-status" id="account-auth-status">
+          <span>尚未登录</span>
+        </div>
+        <div id="token-display" style="display:none;">
+          <label>JWT Token</label>
+          <div class="token-box" id="token-text"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>登录</h2>
+        <div class="form-row">
+          <div>
+            <label>用户名</label>
+            <input type="text" id="login-username" placeholder="用户名">
+          </div>
+          <div>
+            <label>密码</label>
+            <input type="password" id="login-password" placeholder="密码">
+          </div>
+        </div>
+        <button class="primary" id="btn-login">登录</button>
+      </div>
+
+      <div class="card">
+        <h2>注册</h2>
+        <div class="form-row">
+          <div>
+            <label>用户名</label>
+            <input type="text" id="register-username" placeholder="用户名">
+          </div>
+          <div>
+            <label>昵称</label>
+            <input type="text" id="register-nickname" placeholder="昵称（可选）">
+          </div>
+        </div>
+        <div class="form-row single">
+          <div>
+            <label>密码（至少6位）</label>
+            <input type="password" id="register-password" placeholder="密码">
+          </div>
+        </div>
+        <button class="primary" id="btn-register">注册</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const state = {
+      token: null,
+      user: null,
+      orderRole: "buyer",
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(message, duration = 2500) {
+      const toast = $("toast");
+      toast.textContent = message;
+      toast.style.display = "block";
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => { toast.style.display = "none"; }, duration);
+    }
+
+    function authHeaders() {
+      return state.token ? { "Authorization": "Bearer " + state.token } : {};
+    }
+
+    async function api(path, options = {}) {
+      const config = {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders(),
+          ...(options.headers || {}),
+        },
+      };
+      const response = await fetch(path, config);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || "Request failed");
+      }
+      return data;
+    }
+
+    function updateAuthUI() {
+      const loggedIn = !!state.token;
+      const statuses = [
+        $("product-auth-status"),
+        $("order-auth-status"),
+        $("message-auth-status"),
+        $("account-auth-status"),
+      ];
+      statuses.forEach((el) => {
+        el.className = "auth-status" + (loggedIn ? " logged-in" : "");
+        el.innerHTML = loggedIn
+          ? '<span>已登录：' + (state.user ? state.user.username : "") + "</span>"
+          : "<span>尚未登录，部分功能受限</span>";
+      });
+      if (loggedIn) {
+        $("token-display").style.display = "block";
+        $("token-text").textContent = state.token;
+      } else {
+        $("token-display").style.display = "none";
+      }
+    }
+
+    function switchPage(pageName) {
+      document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+      document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+      $("page-" + pageName).classList.add("active");
+      document.querySelector('.nav-btn[data-page="' + pageName + '"]').classList.add("active");
+      if (pageName === "products") loadProducts();
+      if (pageName === "orders") loadOrders();
+      if (pageName === "messages") loadMessages();
+    }
+
+    function productCard(p) {
+      const statusBadge = p.status === 1
+        ? '<span class="badge on-sale">在售</span>'
+        : p.status === 2
+          ? '<span class="badge sold">已售</span>'
+          : '<span class="badge sold">已下架</span>';
+      return (
+        '<div class="product-card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+            '<span class="meta">ID ' + p.id + "</span>" + statusBadge +
+          "</div>" +
+          '<div class="title">' + p.title + "</div>" +
+          '<div class="price">' + p.price.toFixed(2) + " 元</div>" +
+          '<div class="desc">' + (p.description || "无描述") + "</div>" +
+          '<div class="meta">分类 ' + p.category_id + " | 卖家 " + p.seller_id + "</div>" +
+        "</div>"
+      );
+    }
+
+    async function loadProducts() {
+      const list = $("product-list");
+      list.innerHTML = '<div class="empty-state">加载中...</div>';
+      try {
+        const data = await api("/api/products");
+        if (!data.data.items.length) {
+          list.innerHTML = '<div class="empty-state">暂无商品，发布一个试试</div>';
+          return;
+        }
+        list.innerHTML = data.data.items.map(productCard).join("");
+      } catch (err) {
+        list.innerHTML = '<div class="empty-state">加载失败：' + err.message + "</div>";
+      }
+    }
+
+    async function createProduct() {
+      const title = $("product-title").value.trim();
+      const price = parseFloat($("product-price").value);
+      const categoryId = parseInt($("product-category").value);
+      const description = $("product-description").value.trim();
+      if (!title || !price || price <= 0) {
+        showToast("请填写有效的标题和价格");
+        return;
+      }
+      try {
+        await api("/api/products", {
+          method: "POST",
+          body: JSON.stringify({ title, price, category_id: categoryId, description, images: [] }),
+        });
+        $("product-title").value = "";
+        $("product-price").value = "";
+        $("product-description").value = "";
+        showToast("商品发布成功");
+        loadProducts();
+      } catch (err) {
+        showToast("发布失败：" + err.message);
+      }
+    }
+
+    async function loadOrders() {
+      const body = $("orders-body");
+      body.innerHTML = '<tr><td colspan="5" class="empty-state">加载中...</td></tr>';
+      try {
+        const data = await api("/api/orders?role=" + state.orderRole);
+        if (!data.data.items.length) {
+          body.innerHTML = '<tr><td colspan="5" class="empty-state">暂无订单</td></tr>';
+          return;
+        }
+        body.innerHTML = data.data.items.map((o) => {
+          const status = o.status === 1 ? "待处理" : o.status === 2 ? "已完成" : "已取消";
+          return (
+            "<tr><td>" + o.id + "</td><td>" + o.product_id + "</td><td>" +
+            o.amount.toFixed(2) + " 元</td><td>" + status + "</td><td>" +
+            (o.created_at || "").slice(0, 19) + "</td></tr>"
+          );
+        }).join("");
+      } catch (err) {
+        body.innerHTML = '<tr><td colspan="5" class="empty-state">' + err.message + "</td></tr>";
+      }
+    }
+
+    async function loadMessages() {
+      const body = $("messages-body");
+      body.innerHTML = '<tr><td colspan="5" class="empty-state">加载中...</td></tr>';
+      try {
+        const data = await api("/api/messages");
+        if (!data.data.length) {
+          body.innerHTML = '<tr><td colspan="5" class="empty-state">暂无消息</td></tr>';
+          return;
+        }
+        body.innerHTML = data.data.map((m) => (
+          "<tr><td>" + m.id + "</td><td>" + m.sender_id + "</td><td>" +
+          m.content.slice(0, 80) + "</td><td>" +
+          (m.is_read ? "已读" : "未读") + "</td><td>" +
+          (m.created_at || "").slice(0, 19) + "</td></tr>"
+        )).join("");
+      } catch (err) {
+        body.innerHTML = '<tr><td colspan="5" class="empty-state">' + err.message + "</td></tr>";
+      }
+    }
+
+    async function login() {
+      const username = $("login-username").value.trim();
+      const password = $("login-password").value;
+      if (!username || !password) {
+        showToast("请输入用户名和密码");
+        return;
+      }
+      try {
+        const data = await api("/api/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ username, password }),
+        });
+        state.token = data.data.token;
+        state.user = data.data.user;
+        updateAuthUI();
+        showToast("登录成功");
+        switchPage("products");
+      } catch (err) {
+        showToast("登录失败：" + err.message);
+      }
+    }
+
+    async function register() {
+      const username = $("register-username").value.trim();
+      const nickname = $("register-nickname").value.trim();
+      const password = $("register-password").value;
+      if (!username || password.length < 6) {
+        showToast("用户名不能为空，密码至少6位");
+        return;
+      }
+      try {
+        await api("/api/auth/register", {
+          method: "POST",
+          body: JSON.stringify({ username, password, nickname }),
+        });
+        $("register-username").value = "";
+        $("register-nickname").value = "";
+        $("register-password").value = "";
+        showToast("注册成功，请登录");
+      } catch (err) {
+        showToast("注册失败：" + err.message);
+      }
+    }
+
+    document.querySelectorAll(".nav-btn").forEach((btn) => {
+      btn.addEventListener("click", () => switchPage(btn.dataset.page));
+    });
+    $("btn-create-product").addEventListener("click", createProduct);
+    $("btn-refresh-products").addEventListener("click", loadProducts);
+    $("btn-refresh-messages").addEventListener("click", loadMessages);
+    $("btn-login").addEventListener("click", login);
+    $("btn-register").addEventListener("click", register);
+    $("btn-buyer-orders").addEventListener("click", () => {
+      state.orderRole = "buyer";
+      $("btn-buyer-orders").style.cssText = "background:var(--accent);color:#fff;border-color:var(--accent);";
+      $("btn-seller-orders").style.cssText = "";
+      loadOrders();
+    });
+    $("btn-seller-orders").addEventListener("click", () => {
+      state.orderRole = "seller";
+      $("btn-seller-orders").style.cssText = "background:var(--accent);color:#fff;border-color:var(--accent);";
+      $("btn-buyer-orders").style.cssText = "";
+      loadOrders();
+    });
+
+    updateAuthUI();
+    loadProducts();
+  </script>
+</body>
+</html>
